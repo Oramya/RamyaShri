@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bheema Institute of Technology and Science, Adhoni</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: skyblue;
+        margin: 0;
+        padding: 0;
+    }
+
+    .container {
+        width: 70%;
+        margin: 40px auto;
+        background: white;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0,0,0,0.15);
+    }
+
+    h1 { text-align: center; color: #002b80; }
+
+    h2 {
+        color: #003399;
+        border-bottom: 2px solid #003399;
+        padding-bottom: 5px;
+        margin-top: 25px;
+    }
+
+    label { font-weight: bold; display: block; margin-top: 10px; }
+
+    input {
+        width: 98%;
+        padding: 8px;
+        margin-top: 5px;
+        border: 1px solid #b3c6ff;
+        border-radius: 5px;
+    }
+
+    .subjects {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    button {
+        margin-top: 15px;
+        padding: 10px 20px;
+        background: #003399;
+        color: white;
+        font-weight: bold;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    button:hover { background: #001f66; }
+    .delete-btn { background: #cc0000; }
+
+    .output-box {
+        background: #f2f5ff;
+        border-left: 4px solid #003399;
+        padding: 10px;
+        margin-top: 20px;
+        min-height: 120px;
+        border-radius: 5px;
+    }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    table, th, td { border: 1px solid #99c2ff; }
+    th, td { padding: 8px; text-align: center; }
+    th { background: #e6f2ff; }
+</style>
+
+</head>
+<body>
+
+<div class="container">
+    <h1>Bheema Institute of Technology and Science, Adhoni</h1>
+
+    <h2>Add Student</h2>
+    <label>Roll Number</label>
+    <input type="text" id="roll">
+
+    <label>Student Name</label>
+    <!-- FIX: changed id from name to studentName -->
+    <input type="text" id="studentName">
+
+    <label>Enter Subject Marks</label>
+    <div class="subjects">
+        <input type="number" id="cns" placeholder="CNS">
+        <input type="number" id="smp" placeholder="SMP">
+        <input type="number" id="stm" placeholder="STM">
+        <input type="number" id="cloud" placeholder="Cloud Computing">
+        <input type="number" id="ml" placeholder="Machine Learning">
+        <input type="number" id="soft" placeholder="Soft Skills">
+    </div>
+
+    <button onclick="addStudent()">Add Student</button>
+
+    <h2>Search Student</h2>
+    <input type="text" id="searchRoll" placeholder="Enter Roll Number">
+    <button onclick="searchStudent()">Search</button>
+	
+	<h2>Search Student By Name</h2>
+    <input type="text" id="searchName" placeholder="Enter Student Name">
+    <button onclick="searchStudentByName()">Search</button>
+
+    <h2>Update Marks</h2>
+    <input type="text" id="updateRoll" placeholder="Enter Roll Number">
+    <button onclick="updateMarks()">Update Marks</button>
+
+    <h2>Delete Student</h2>
+    <input type="text" id="deleteRoll" placeholder="Enter Roll Number">
+    <button class="delete-btn" onclick="deleteStudent()">Delete</button>
+
+    <h2>Display / Export</h2>
+    <button onclick="displayStudents()">Show Students</button>
+    <button onclick="exportToExcel()">Export to Excel</button>
+
+    <div class="output-box" id="output">Output will show here...</div>
+</div>
+
+<script>
+    function searchStudentByName() {
+    const name = searchName.value.toLowerCase().trim();
+
+    const result = students.filter(
+        st => st.name.toLowerCase() === name
+    );
+
+    if (result.length > 0) {
+        output.innerHTML = formatTable(result);
+    } else {
+        output.innerHTML = "Student not found";
+    }
+        } 
+
+    window.onload = function () {
+		const data = localStorage.getItem("students");
+		if (data) {
+			students = JSON.parse(data);
+		}
+	};
+
+    let students = [];
+
+    function calculateResult(s) {
+        const total = Number(s.cns) + Number(s.smp) + Number(s.stm) +
+                      Number(s.cloud) + Number(s.ml) + Number(s.soft);
+        const percentage = (total / 600) * 100;
+        let grade = "Fail";
+        if (percentage >= 75) grade = "A";
+        else if (percentage >= 60) grade = "B";
+        else if (percentage >= 50) grade = "C";
+        return { total, percentage: percentage.toFixed(2), grade };
+    }
+
+    function addStudent() {
+        const student = {
+            roll: roll.value,
+            name: studentName.value,
+            cns: cns.value,
+            smp: smp.value,
+            stm: stm.value,
+            cloud: cloud.value,
+            ml: ml.value,
+            soft: soft.value
+        };
+        const result = calculateResult(student);
+        Object.assign(student, result);
+        students.push(student);
+		localStorage.setItem("students", JSON.stringify(students));
+        output.innerHTML = "Student added successfully";
+        clearInputs();
+    }
+
+    function searchStudent() {
+        const r = searchRoll.value;
+        const s = students.find(st => st.roll === r);
+        output.innerHTML = s ? formatTable([s]) : "Student not found";
+    }
+
+    function updateMarks() {
+        const r = updateRoll.value;
+        const s = students.find(st => st.roll === r);
+        if (!s) { output.innerHTML = "Student not found"; return; }
+
+        s.cns = cns.value || s.cns;
+        s.smp = smp.value || s.smp;
+        s.stm = stm.value || s.stm;
+        s.cloud = cloud.value || s.cloud;
+        s.ml = ml.value || s.ml;
+        s.soft = soft.value || s.soft;
+
+        const result = calculateResult(s);
+        Object.assign(s, result);
+        output.innerHTML = "Marks updated successfully";
+        clearInputs();
+    }
+
+    function deleteStudent() {
+        const r = deleteRoll.value;
+        students = students.filter(st => st.roll !== r);
+        output.innerHTML = "Student deleted successfully";
+    }
+
+    function displayStudents() {
+        output.innerHTML = students.length ? formatTable(students) : "No records available";
+    }
+
+    function formatTable(data) {
+        let html = `<table><tr>
+        <th>Roll</th><th>Name</th><th>CNS</th><th>SMP</th><th>STM</th>
+        <th>Cloud</th><th>ML</th><th>Soft</th>
+        <th>Total</th><th>%</th><th>Grade</th></tr>`;
+        data.forEach(s => {
+            html += `<tr><td>${s.roll}</td><td>${s.name}</td><td>${s.cns}</td>
+            <td>${s.smp}</td><td>${s.stm}</td><td>${s.cloud}</td>
+            <td>${s.ml}</td><td>${s.soft}</td>
+            <td>${s.total}</td><td>${s.percentage}</td><td>${s.grade}</td></tr>`;
+        });
+        html += "</table>";
+        return html;
+    }
+
+    function exportToExcel() {
+        let csv = "Roll,Name,CNS,SMP,STM,Cloud,ML,Soft,Total,Percentage,Grade\n";
+        students.forEach(s => {
+            csv += `${s.roll},${s.name},${s.cns},${s.smp},${s.stm},${s.cloud},${s.ml},${s.soft},${s.total},${s.percentage},${s.grade}\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'student_marks.csv';
+        a.click();
+    }
+
+    function clearInputs() {
+        document.querySelectorAll('input').forEach(i => i.value = "");
+    }
+</script>
+
+</body>
+</html>
